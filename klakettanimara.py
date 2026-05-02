@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report
 from skimage.feature import hog, graycomatrix, graycoprops
 from sklearn.ensemble import RandomForestClassifier 
-#hi
+
 def hough_circle_features(gray):
     img_h, img_w = gray.shape[:2]
     blurred = cv2.medianBlur(gray, 11)
