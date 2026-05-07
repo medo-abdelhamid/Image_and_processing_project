@@ -174,7 +174,7 @@ print(" tamam ya basha!")
 
 
 
-print("\n ya mosahel!")
+print("\n ya mosahel")
 
 for category in categories:
     class_index = categories.index(category)
