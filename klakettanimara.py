@@ -3,7 +3,8 @@ import cv2
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
 from skimage.feature import hog, graycomatrix, graycoprops
 from sklearn.ensemble import RandomForestClassifier 
 
@@ -35,7 +36,7 @@ def hough_circle_features(gray):
 def extract_features_from_image(img_matrix):
 
         img_rgb = cv2.cvtColor(img_matrix, cv2.COLOR_BGR2RGB)
-        img_resized = cv2.resize(img_rgb, (128, 128))
+        img_resized = cv2.resize(img_rgb, (256, 256))
         gray = cv2.cvtColor(img_resized, cv2.COLOR_RGB2GRAY)
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -60,19 +61,19 @@ def extract_features_from_image(img_matrix):
         texture_features = np.concatenate([contrast, dissimilarity, homogeneity, energy, correlation])
 
 
-        hog_features = hog(gray, orientations=8, pixels_per_cell=(16, 16),cells_per_block=(1, 1), visualize=False)
+        hog_features = hog( gray, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2),block_norm='L2-Hys',transform_sqrt=True,visualize=False)
 
-        sift = cv2.SIFT_create(nfeatures=100)
+        sift = cv2.SIFT_create(nfeatures=65)
         keypoints, descriptors = sift.detectAndCompute(gray, None)
-
+        
         if descriptors is not None:
             desc_features = descriptors.flatten()
-            if len(desc_features) < 100 * 128:
-                desc_features = np.pad(desc_features, (0, 100 * 128 - len(desc_features)))
+            if len(desc_features) < 65 * 256:
+                desc_features = np.pad(desc_features, (0, 65 * 256 - len(desc_features)))
             else:
-                desc_features = desc_features[:100 * 128]
+                desc_features = desc_features[:65 * 256]
         else:
-            desc_features = np.zeros(100 * 128)
+            desc_features = np.zeros(65 * 256)
 
         hist = cv2.calcHist([img_resized], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
         hist_features = hist.flatten()
@@ -100,13 +101,20 @@ def extract_features_from_image(img_matrix):
 
         centers_features = centers.flatten() / 255.0 
 
-        # Proportion of each segment (k = 3 values)
         labels_flat = labels.flatten()
         proportions = np.array([np.sum(labels_flat == i) / len(labels_flat) for i in range(k)])
 
         kmeans_features = np.concatenate((centers_features, proportions))
 
-        return np.concatenate((hist_features, hist_gray1,texture_features, desc_features, hog_features, contour_features, circle_features, dog_features, kmeans_features))
+        return np.concatenate((hist_features, 
+                                hist_gray1,
+                                texture_features,
+                                desc_features, 
+                                hog_features, 
+                                contour_features, 
+                                circle_features, 
+                                dog_features, 
+                                kmeans_features))
 
 
 
@@ -142,7 +150,7 @@ for category in categories:
         combined_features = extract_features_from_image(img_matrix)
         flat_data.append(combined_features)
         target.append(class_index)
-
+        
 flat_data = np.array(flat_data)
 target = np.array(target)
 df = pd.DataFrame(flat_data)
@@ -196,3 +204,24 @@ X_test_scaled = scaler.transform(np.array(test_flat_data))
 y_pred = model.predict(X_test_scaled)
 print(f"\nFinal Accuracy with Random Forest: {accuracy_score(test_target, y_pred) * 100:.2f}")
 print(classification_report(test_target, y_pred, target_names=categories))
+
+cm = confusion_matrix(test_target, y_pred)
+print("\nConfusion Matrix:")
+print(cm)
+
+plt.figure(figsize=(10, 8))
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+plt.title('Confusion Matrix - Ball Classification', fontsize=16)
+plt.colorbar()
+tick_marks = np.arange(len(categories))
+plt.xticks(tick_marks, categories, rotation=45, ha='right')
+plt.yticks(tick_marks, categories)
+plt.ylabel('True Label', fontsize=12)
+plt.xlabel('Predicted Label', fontsize=12)
+
+for i in range(cm.shape[0]):
+    for j in range(cm.shape[1]):
+        plt.text(j, i, str(cm[i, j]), ha='center', va='center', color='white' if cm[i, j] > cm.max() / 2 else 'black', fontsize=12)
+
+plt.tight_layout()
+plt.show()
