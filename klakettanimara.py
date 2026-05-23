@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from skimage.feature import hog, graycomatrix, graycoprops
 from sklearn.ensemble import RandomForestClassifier 
 
-def hough_circle_features(gray):
+def circle_features(gray):
     img_h, img_w = gray.shape[:2]
     blurred = cv2.medianBlur(gray, 11)
     thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV, 11, 2)
@@ -92,7 +92,7 @@ def extract_features_from_image(img_matrix):
         else:
             contour_features = np.zeros(3)
 
-        circle_features = hough_circle_features(gray)
+        circle_features = circle_features(gray)
 
         k = 3
         pixel_values = img_resized.reshape((-1, 3)).astype(np.float32)

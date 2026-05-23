@@ -104,7 +104,6 @@ def show_top_3_absolute_best(model, data_loader, class_names):
                 pred_class = class_names[predicted_indices[i]]
                 true_label = class_names[labels[i]]
                 
-                # Save just the essential info
                 all_results.append({
                     'prob': highest_prob,
                     'pred_class': pred_class,
@@ -176,7 +175,7 @@ if __name__ == '__main__':
         print(f"Epoch {epoch+1}/{epochs} - Loss: {running_loss/len(train_loader):.4f}")
 
 
-
+    torch.save(model.state_dict(), 'ballsCNN.pth')
     end_time = time.time()
     total_time = (end_time - start_time) / 60
     print(f"\nTotal Runtime for Training: {total_time:.2f} minutes")
