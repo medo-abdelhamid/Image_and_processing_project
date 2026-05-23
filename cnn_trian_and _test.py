@@ -6,7 +6,6 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
 import time
 import torch.nn.functional as F
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
